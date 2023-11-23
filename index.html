@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App Ozen</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="card">
+        <div class="search">
+            <input type="text" placeholder="Please enter a city/country" spellcheck="false">
+            <button><img src="images/search.png"></button>
+        </div>
+        <div class="error">
+            <p>Invalid City Name</p>
+        </div>
+        <div class="weather">
+            <img src="images/rain.png" class="weather-icon">
+            <h1 class="temp">22°C</h1>
+            <h2 class="city">New York</h2>
+            <h3 class="town"></h3>
+            <div class="details">
+                <div class="col">
+                    <img src="images/humidity.png">
+                    <div>
+                        <p class="humidity">50%</p>
+                        <p>Humidity</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <img src="images/wind.png">
+                    <div>
+                        <p class="wind">15 km/h</p>
+                        <p>Wind Speed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        main();
+
+
+
+        const searchBox = document.querySelector(".search input");
+        const btnSearch = document.querySelector(".search button");
+        const weatherIcon = document.querySelector(".weather-icon");
+
+
+
+        async function getCurrentCity() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            const latitude = position.coords.latitude;
+                            const longitude = position.coords.longitude;
+
+                            const apiKey = 'e475efdfd2db442fbcf24061103c4040';
+                            const apiUrl = `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${apiKey}`;
+
+                            console.log(apiUrl);
+
+                            fetch(apiUrl)
+                                .then(response => response.json())
+                                .then(data => {
+                                    const city = data.results[0].components.city;
+                                    resolve(city);
+                                })
+                                .catch(error => {
+                                    reject(error);
+                                });
+                        },
+                        error => {
+                            reject(error);
+                        }
+                    );
+                } else {
+                    reject(new Error("Geolocation is not supported by this browser."));
+                }
+            });
+        }
+
+        async function main() {
+            try {
+                const currentCity = await getCurrentCity();
+                if (currentCity) {
+                    checkWeather(currentCity);
+                } else {
+                    console.log("Unable to retrieve current city.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+
+
+        async function checkWeather(city) {
+            const apiKey = "2f6568b7ad51ea0cd379e55fbc1404d2";
+            const apiUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric&q=";
+
+            const response = await fetch(apiUrl + city + `&appid=${apiKey}`);
+            var data = await response.json();
+
+            console.log(data);
+            document.querySelector(".city").innerHTML = data.name;
+            document.querySelector(".temp").innerHTML = Math.round(data.main.temp) + "°C";
+            document.querySelector(".humidity").innerHTML = data.main.humidity + "%";
+            document.querySelector(".wind").innerHTML = data.wind.speed + " km/h";
+
+            if (data.weather[0].main == "Clouds") {
+                weatherIcon.src = "images/clouds.png";
+            }
+            else if (data.weather[0].main == "Clear") {
+                weatherIcon.src = "images/clear.png";
+            }
+            else if (data.weather[0].main == "Rain") {
+                weatherIcon.src = "images/rain.png";
+            }
+            else if (data.weather[0].main == "Drizzle") {
+                weatherIcon.src = "images/drizzle.png";
+            }
+            else if (data.weather[0].main == "Mist") {
+                weatherIcon.src = "images/mist.png";
+            } else if (data.weather[0].main == "Snow") {
+                weatherIcon.src = "images/snow.png";
+            }
+        }
+
+        btnSearch.addEventListener("click", () => {
+            checkWeather(searchBox.value);
+        })
+
+
+    </script>
+</body>
+
+</html>
